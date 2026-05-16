@@ -128,14 +128,7 @@ button.send:hover{
 }
 
 .success{ color:#4ade80; }
-.error{ color:#f87171; }
 
-code, pre{
-    background:#111827;
-    padding:4px;
-    border-radius:6px;
-    font-family:monospace;
-}
 </style>
 </head>
 
@@ -147,7 +140,6 @@ code, pre{
 
     <label>Message</label>
 
-    <!-- Formatting buttons -->
     <div class="toolbar">
         <button type="button" onclick="wrapText('*')">Bold</button>
         <button type="button" onclick="wrapText('_')">Italic</button>
@@ -160,9 +152,7 @@ code, pre{
     <label>Image URL (optional)</label>
     <input type="text" id="image" placeholder="https://example.com/image.png" />
 
-    <button class="send" onclick="sendMessage()">
-        Send Message
-    </button>
+    <button class="send" onclick="sendMessage()">Send Message</button>
 
     <div class="status" id="status"></div>
 
@@ -176,8 +166,93 @@ code, pre{
     </div>
 </div>
 
-<!-- JS file -->
-<script src="script.js"></script>
+<script>
+const textarea = document.getElementById("message");
+const previewText = document.getElementById("previewText");
+const imageInput = document.getElementById("image");
+const previewImage = document.getElementById("previewImage");
+const status = document.getElementById("status");
+
+// TEXT WRAPPING (bold, italic, code)
+function wrapText(wrapper) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+
+    if (!selected) {
+        textarea.value =
+            text.slice(0, start) +
+            wrapper + wrapper +
+            text.slice(end);
+
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + 1;
+        updatePreview();
+        return;
+    }
+
+    textarea.value =
+        text.slice(0, start) +
+        wrapper + selected + wrapper +
+        text.slice(end);
+
+    textarea.focus();
+    textarea.selectionStart = start + wrapper.length;
+    textarea.selectionEnd = end + wrapper.length;
+
+    updatePreview();
+}
+
+// CODE BLOCK
+function insertCodeBlock() {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+
+    const block = "```\n" + (selected || "") + "\n```";
+
+    textarea.value =
+        text.slice(0, start) +
+        block +
+        text.slice(end);
+
+    textarea.focus();
+    textarea.selectionStart = start + 4;
+    textarea.selectionEnd = start + 4 + (selected ? selected.length : 0);
+
+    updatePreview();
+}
+
+// LIVE PREVIEW
+textarea.addEventListener("input", updatePreview);
+imageInput.addEventListener("input", updatePreview);
+
+function updatePreview() {
+    previewText.textContent = textarea.value || "Your message preview...";
+
+    if (imageInput.value.trim()) {
+        previewImage.style.display = "block";
+        previewImage.src = imageInput.value;
+    } else {
+        previewImage.style.display = "none";
+    }
+}
+
+// SEND BUTTON (demo)
+function sendMessage() {
+    status.textContent = "Sending...";
+    status.className = "status";
+
+    setTimeout(() => {
+        status.textContent = "Message sent!";
+        status.classList.add("success");
+    }, 600);
+}
+</script>
 
 </body>
 </html>
