@@ -47,6 +47,24 @@ label{
     color:#d1d5db;
 }
 
+/* toolbar */
+.toolbar{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.toolbar button{
+    flex:1;
+    padding:8px;
+    font-size:12px;
+    border-radius:10px;
+    background:#1f2937;
+    border:1px solid #374151;
+    cursor:pointer;
+    color:white;
+}
+
 textarea,input{
     width:100%;
     background:#0b1220;
@@ -58,9 +76,9 @@ textarea,input{
     outline:none;
 }
 
-textarea{ min-height:120px; resize:vertical; }
+textarea{ min-height:140px; resize:vertical; }
 
-button{
+button.send{
     width:100%;
     border:none;
     background:linear-gradient(135deg,#3b82f6,#8b5cf6);
@@ -70,14 +88,6 @@ button{
     font-weight:600;
     cursor:pointer;
 }
-
-.status{
-    margin-top:12px;
-    font-size:14px;
-}
-
-.success{ color:#4ade80; }
-.error{ color:#f87171; }
 
 .preview{
     margin-top:18px;
@@ -99,6 +109,11 @@ pre{
     border-radius:10px;
     overflow:auto;
 }
+
+.status{
+    margin-top:10px;
+    font-size:14px;
+}
 </style>
 </head>
 
@@ -106,15 +121,24 @@ pre{
 
 <div class="card">
     <h1>67 bot</h1>
-    <p>Send messages to Google Chat</p>
+    <p>Markdown editor + Google Chat sender</p>
 
     <label>Message</label>
-    <textarea id="message" placeholder="Type your message..."></textarea>
+
+    <!-- Markdown buttons -->
+    <div class="toolbar">
+        <button onclick="wrap('**')">Bold</button>
+        <button onclick="wrap('*')">Italic</button>
+        <button onclick="wrap('`')">Code</button>
+        <button onclick="codeBlock()">Code Block</button>
+    </div>
+
+    <textarea id="message" placeholder="Select text then press buttons..."></textarea>
 
     <label>Image URL (optional)</label>
-    <input id="image" placeholder=""/>
+    <input id="image" placeholder="https://example.com/image.png"/>
 
-    <button onclick="sendMessage()">Send Message</button>
+    <button class="send" onclick="sendMessage()">Send Message</button>
 
     <div class="status" id="status"></div>
 
@@ -124,14 +148,68 @@ pre{
     </div>
 </div>
 
-<!-- your JS file (contains webhook + sendMessage) -->
 <script src="script.js"></script>
 
-<!-- markdown preview ONLY (does not affect sending) -->
 <script>
-const msg = document.getElementById("message");
+const textarea = document.getElementById("message");
 const preview = document.getElementById("preview");
 
+/* --------------------------
+   WRAP SELECTED TEXT
+--------------------------*/
+function wrap(wrapper){
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+
+    if(!selected){
+        // if no selection, insert empty wrapper
+        textarea.value =
+            text.slice(0, start) +
+            wrapper + wrapper +
+            text.slice(end);
+
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + wrapper.length;
+    } else {
+        textarea.value =
+            text.slice(0, start) +
+            wrapper + selected + wrapper +
+            text.slice(end);
+
+        textarea.focus();
+        textarea.selectionStart = start + wrapper.length;
+        textarea.selectionEnd = end + wrapper.length;
+    }
+
+    updatePreview();
+}
+
+/* --------------------------
+   CODE BLOCK BUTTON
+--------------------------*/
+function codeBlock(){
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+
+    const block = "```\n" + (selected || "") + "\n```";
+
+    textarea.value =
+        text.slice(0, start) +
+        block +
+        text.slice(end);
+
+    updatePreview();
+}
+
+/* --------------------------
+   PREVIEW (Markdown render)
+--------------------------*/
 function renderMarkdown(text){
     return text
         .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
@@ -141,10 +219,12 @@ function renderMarkdown(text){
 }
 
 function updatePreview(){
-    preview.innerHTML = renderMarkdown(msg.value || "Your message preview...");
+    preview.innerHTML = renderMarkdown(
+        textarea.value || "Your preview..."
+    );
 }
 
-msg.addEventListener("input", updatePreview);
+textarea.addEventListener("input", updatePreview);
 updatePreview();
 </script>
 
