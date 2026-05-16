@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>67 bot</title>
 
 <style>
@@ -30,7 +30,6 @@ body{
     border:1px solid #1f2937;
     border-radius:24px;
     padding:24px;
-    box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
 h1{ font-size:24px; margin-bottom:8px; }
@@ -48,85 +47,57 @@ label{
     color:#d1d5db;
 }
 
-.toolbar{
-    display:flex;
-    gap:8px;
-    margin-bottom:10px;
-}
-
-.toolbar button{
-    flex:1;
-    padding:8px;
-    font-size:12px;
-    border-radius:10px;
-    background:#1f2937;
-    border:1px solid #374151;
-    cursor:pointer;
-    color:white;
-}
-
-input,
-textarea{
+textarea,input{
     width:100%;
     background:#0b1220;
     border:1px solid #243041;
     color:white;
     border-radius:14px;
     padding:14px;
-    outline:none;
     margin-bottom:18px;
+    outline:none;
 }
 
-textarea{
-    resize:vertical;
-    min-height:120px;
-}
+textarea{ min-height:120px; resize:vertical; }
 
-button.send{
+button{
     width:100%;
     border:none;
     background:linear-gradient(135deg,#3b82f6,#8b5cf6);
     color:white;
     padding:14px;
     border-radius:14px;
-    font-size:15px;
     font-weight:600;
     cursor:pointer;
 }
 
-.preview{
-    margin-top:22px;
-    padding:16px;
-    border-radius:16px;
-    background:#0b1220;
-    border:1px solid #243041;
-}
-
-.preview img{
-    width:100%;
-    border-radius:12px;
-    margin-top:12px;
-}
-
 .status{
-    margin-top:14px;
+    margin-top:12px;
     font-size:14px;
 }
 
 .success{ color:#4ade80; }
+.error{ color:#f87171; }
 
-/* Markdown preview */
-pre{
-    background:#000;
-    padding:10px;
-    border-radius:10px;
-    overflow:auto;
+.preview{
+    margin-top:18px;
+    padding:14px;
+    background:#0b1220;
+    border-radius:12px;
+    border:1px solid #243041;
 }
 
 code{
-    background:#111;
-    padding:2px 5px;
+    background:#111827;
+    padding:2px 6px;
     border-radius:6px;
+}
+
+pre{
+    background:#111827;
+    padding:10px;
+    border-radius:10px;
+    overflow:auto;
 }
 </style>
 </head>
@@ -135,97 +106,45 @@ code{
 
 <div class="card">
     <h1>67 bot</h1>
-    <p>Send formatted messages + images to Google Chat</p>
+    <p>Send messages to Google Chat</p>
 
     <label>Message</label>
-
-    <div class="toolbar">
-        <button type="button" onclick="wrapText('*')">Bold</button>
-        <button type="button" onclick="wrapText('_')">Italic</button>
-        <button type="button" onclick="wrapText('`')">Code</button>
-        <button type="button" onclick="insertCodeBlock()">Code Block</button>
-    </div>
-
     <textarea id="message" placeholder="Type your message..."></textarea>
 
     <label>Image URL (optional)</label>
-    <input type="text" id="image" placeholder="https://example.com/image.png" />
+    <input id="image" placeholder=""/>
 
-    <button class="send" onclick="sendMessage()">Send Message</button>
+    <button onclick="sendMessage()">Send Message</button>
 
     <div class="status" id="status"></div>
 
     <div class="preview">
         <strong>Preview</strong>
-        <p id="previewText" style="margin-top:10px;color:#d1d5db;"></p>
-        <img id="previewImage" style="display:none;" />
+        <div id="preview"></div>
     </div>
 </div>
 
+<!-- your JS file (contains webhook + sendMessage) -->
 <script src="script.js"></script>
 
+<!-- markdown preview ONLY (does not affect sending) -->
 <script>
-const textarea = document.getElementById("message");
-const previewText = document.getElementById("previewText");
-const imageInput = document.getElementById("image");
-const previewImage = document.getElementById("previewImage");
-const status = document.getElementById("status");
+const msg = document.getElementById("message");
+const preview = document.getElementById("preview");
 
-function wrapText(wrapper) {
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    const text = textarea.value;
-    const selected = text.substring(start, end);
-
-    textarea.value =
-        text.slice(0, start) +
-        wrapper + selected + wrapper +
-        text.slice(end);
-
-    updatePreview();
-}
-
-function insertCodeBlock() {
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    const text = textarea.value;
-    const selected = text.substring(start, end);
-
-    textarea.value =
-        text.slice(0, start) +
-        "```\n" + selected + "\n```" +
-        text.slice(end);
-
-    updatePreview();
-}
-
-/* Markdown renderer */
-function renderMarkdown(text) {
+function renderMarkdown(text){
     return text
         .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
         .replace(/`([^`]+)`/g, "<code>$1</code>")
-        .replace(/\*([^*]+)\*/g, "<b>$1</b>")
-        .replace(/_([^_]+)_/g, "<i>$1</i>");
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>");
 }
 
-function updatePreview() {
-    previewText.innerHTML = renderMarkdown(
-        textarea.value || "Your message preview..."
-    );
-
-    if (imageInput.value.trim()) {
-        previewImage.style.display = "block";
-        previewImage.src = imageInput.value;
-    } else {
-        previewImage.style.display = "none";
-    }
+function updatePreview(){
+    preview.innerHTML = renderMarkdown(msg.value || "Your message preview...");
 }
 
-textarea.addEventListener("input", updatePreview);
-imageInput.addEventListener("input", updatePreview);
-
+msg.addEventListener("input", updatePreview);
 updatePreview();
 </script>
 
