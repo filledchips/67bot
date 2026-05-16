@@ -127,7 +127,6 @@ pre{
 
     <!-- Markdown buttons -->
     <div class="toolbar">
-        <button onclick="wrap('**')">Bold</button>
         <button onclick="wrap('*')">Italic</button>
         <button onclick="wrap('`')">Code</button>
         <button onclick="codeBlock()">Code Block</button>
@@ -210,22 +209,13 @@ function codeBlock(){
 /* --------------------------
    PREVIEW (Markdown render)
 --------------------------*/
-function render(text) {
-
-    // CODE BLOCKS FIRST
-    text = text.replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>");
-
-    // INLINE CODE
-    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-    // BOLD (IMPORTANT: before italic)
-    text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
-
-    // ITALIC
-    text = text.replace(/\*(.*?)\*/g, "<i>$1</i>");
-
-    return text;
+function renderMarkdown(text){
+    return text
+        .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>");
 }
+
 function updatePreview(){
     preview.innerHTML = renderMarkdown(
         textarea.value || "Your preview..."
