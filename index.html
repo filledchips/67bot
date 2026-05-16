@@ -33,10 +33,7 @@ body{
     box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
-h1{
-    font-size:24px;
-    margin-bottom:8px;
-}
+h1{ font-size:24px; margin-bottom:8px; }
 
 p{
     color:#9ca3af;
@@ -77,14 +74,7 @@ textarea{
     border-radius:14px;
     padding:14px;
     outline:none;
-    transition:.2s;
     margin-bottom:18px;
-}
-
-input:focus,
-textarea:focus{
-    border-color:#3b82f6;
-    box-shadow:0 0 0 4px rgba(59,130,246,.15);
 }
 
 textarea{
@@ -102,10 +92,6 @@ button.send{
     font-size:15px;
     font-weight:600;
     cursor:pointer;
-}
-
-button.send:hover{
-    opacity:.95;
 }
 
 .preview{
@@ -129,6 +115,19 @@ button.send:hover{
 
 .success{ color:#4ade80; }
 
+/* Markdown preview */
+pre{
+    background:#000;
+    padding:10px;
+    border-radius:10px;
+    overflow:auto;
+}
+
+code{
+    background:#111;
+    padding:2px 5px;
+    border-radius:6px;
+}
 </style>
 </head>
 
@@ -136,7 +135,7 @@ button.send:hover{
 
 <div class="card">
     <h1>67 bot</h1>
-    <p>Send formatted messages + images to the gc</p>
+    <p>Send formatted messages + images to Google Chat</p>
 
     <label>Message</label>
 
@@ -158,13 +157,12 @@ button.send:hover{
 
     <div class="preview">
         <strong>Preview</strong>
-        <p id="previewText" style="margin-top:10px;color:#d1d5db;">
-            Your message preview...
-        </p>
-
+        <p id="previewText" style="margin-top:10px;color:#d1d5db;"></p>
         <img id="previewImage" style="display:none;" />
     </div>
 </div>
+
+<script src="script.js"></script>
 
 <script>
 const textarea = document.getElementById("message");
@@ -173,7 +171,6 @@ const imageInput = document.getElementById("image");
 const previewImage = document.getElementById("previewImage");
 const status = document.getElementById("status");
 
-// TEXT WRAPPING (bold, italic, code)
 function wrapText(wrapper) {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -181,31 +178,14 @@ function wrapText(wrapper) {
     const text = textarea.value;
     const selected = text.substring(start, end);
 
-    if (!selected) {
-        textarea.value =
-            text.slice(0, start) +
-            wrapper + wrapper +
-            text.slice(end);
-
-        textarea.focus();
-        textarea.selectionStart = textarea.selectionEnd = start + 1;
-        updatePreview();
-        return;
-    }
-
     textarea.value =
         text.slice(0, start) +
         wrapper + selected + wrapper +
         text.slice(end);
 
-    textarea.focus();
-    textarea.selectionStart = start + wrapper.length;
-    textarea.selectionEnd = end + wrapper.length;
-
     updatePreview();
 }
 
-// CODE BLOCK
 function insertCodeBlock() {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -213,26 +193,27 @@ function insertCodeBlock() {
     const text = textarea.value;
     const selected = text.substring(start, end);
 
-    const block = "```\n" + (selected || "") + "\n```";
-
     textarea.value =
         text.slice(0, start) +
-        block +
+        "```\n" + selected + "\n```" +
         text.slice(end);
-
-    textarea.focus();
-    textarea.selectionStart = start + 4;
-    textarea.selectionEnd = start + 4 + (selected ? selected.length : 0);
 
     updatePreview();
 }
 
-// LIVE PREVIEW
-textarea.addEventListener("input", updatePreview);
-imageInput.addEventListener("input", updatePreview);
+/* Markdown renderer */
+function renderMarkdown(text) {
+    return text
+        .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*([^*]+)\*/g, "<b>$1</b>")
+        .replace(/_([^_]+)_/g, "<i>$1</i>");
+}
 
 function updatePreview() {
-    previewText.textContent = textarea.value || "Your message preview...";
+    previewText.innerHTML = renderMarkdown(
+        textarea.value || "Your message preview..."
+    );
 
     if (imageInput.value.trim()) {
         previewImage.style.display = "block";
@@ -242,16 +223,10 @@ function updatePreview() {
     }
 }
 
-// SEND BUTTON (demo)
-function sendMessage() {
-    status.textContent = "Sending...";
-    status.className = "status";
+textarea.addEventListener("input", updatePreview);
+imageInput.addEventListener("input", updatePreview);
 
-    setTimeout(() => {
-        status.textContent = "Message sent!";
-        status.classList.add("success");
-    }, 600);
-}
+updatePreview();
 </script>
 
 </body>
